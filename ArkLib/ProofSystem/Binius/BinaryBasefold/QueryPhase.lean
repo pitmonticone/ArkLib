@@ -144,6 +144,7 @@ def proximityChecksSpec (γ_challenges :
       --       ⟩
       --     else final_constant
       --   c_next = f_i_next_val
+      -- NOTE(dtumad): Compilation time for the above in ≥4.27 is painfully slow right now
       let consistency_check : Prop := True
       consistency_check
 
