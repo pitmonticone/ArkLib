@@ -52,7 +52,15 @@ local instance : OracleInterface α where
   toOC.impl := fun () => read
 
 def commitmentScheme : Commitment.Scheme (oSpec α β γ) α β γ !p[] where
-  commit := fun v r => commit v
-  opening := .mk (sorry) (.mk (sorry))
+  commit := fun v _ => commit v
+  opening :=
+    { prover :=
+        { PrvState := fun _ => Unit
+          input := fun _ => ()
+          sendMessage := fun i => i.1.elim0
+          receiveChallenge := fun i => i.1.elim0
+          output := fun _ => pure (true, ()) }
+      verifier :=
+        { verify := fun _ _ => pure true } }
 
 end SimpleRO
