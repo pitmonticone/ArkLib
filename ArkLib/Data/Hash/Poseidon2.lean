@@ -636,7 +636,16 @@ def permute (params : Params) (state : Vector KoalaBear.Field params.width) :
   -- First half of full rounds
   let st1 : Vector KoalaBear.Field params.width :=
     Fin.foldl params.halfNumFullRounds (fun st_acc rc_idx =>
-      let rc_chunk := (rcs.extract rc_idx (rc_idx + params.width)).cast (by sorry)
+      let rc_chunk := (rcs.extract rc_idx (rc_idx + params.width)).cast (by
+        simp only [Params.halfNumFullRounds] at rc_idx
+        have hw := params.width_pos
+        have hrc := rc_idx.isLt
+        have h1 : ↑rc_idx + params.width ≤ (↑rc_idx + 1) * params.width := by nlinarith
+        have h2 : (↑rc_idx + 1) * params.width ≤ (params.numFullRounds / 2) * params.width := by
+          nlinarith
+        have h3 := Nat.mul_le_mul_right params.width (Nat.div_le_self params.numFullRounds 2)
+        rw [Nat.min_eq_left (by omega)]
+        omega)
       let st_new := fullRound params st_acc rc_chunk
       st_new) st0
 
@@ -645,7 +654,10 @@ def permute (params : Params) (state : Vector KoalaBear.Field params.width) :
 
   -- Partial rounds
   let st2 := Fin.foldl params.numPartialRounds (fun st_acc rc_idx =>
-    let rc_val := rcs[rc_idx]'(sorry)
+    let rc_val := rcs[rc_idx]'(by
+      simp only [Params.halfNumFullRounds]
+      have := Nat.mul_le_mul_right params.width (Nat.div_le_self params.numFullRounds 2)
+      omega)
     let st_new := partialRound params st_acc rc_val
     st_new) st1
 
@@ -654,7 +666,23 @@ def permute (params : Params) (state : Vector KoalaBear.Field params.width) :
 
   -- Second half of full rounds
   let st3 := Fin.foldl params.halfNumFullRounds (fun st_acc rc_idx =>
-    let rc_chunk := (rcs.extract rc_idx (rc_idx + params.width)).cast (by sorry)
+    let rc_chunk := (rcs.extract rc_idx (rc_idx + params.width)).cast (by
+      simp only [Params.halfNumFullRounds] at rc_idx ⊢
+      have hw := params.width_pos
+      have hrc := rc_idx.isLt
+      have h0 := Nat.mul_le_mul_right params.width (Nat.div_le_self params.numFullRounds 2)
+      have hsub : params.numFullRounds * params.width + params.numPartialRounds -
+          params.numFullRounds / 2 * params.width - params.numPartialRounds =
+          (params.numFullRounds - params.numFullRounds / 2) * params.width := by
+        rw [Nat.sub_mul]; omega
+      rw [hsub]
+      have h1 : ↑rc_idx + params.width ≤ (↑rc_idx + 1) * params.width := by nlinarith
+      have h2 : (↑rc_idx + 1) * params.width ≤ (params.numFullRounds / 2) * params.width := by
+        nlinarith
+      have hd : params.numFullRounds / 2 ≤ params.numFullRounds - params.numFullRounds / 2 := by
+        omega
+      rw [Nat.min_eq_left (by nlinarith [Nat.mul_le_mul_right params.width hd])]
+      omega)
     let st_new := fullRound params st_acc rc_chunk
     st_new) st2
 
