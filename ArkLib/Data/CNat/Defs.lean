@@ -352,7 +352,11 @@ theorem mul_distrib_add {a b : CNat 1} : a * (b + 1) = a * b + a := by
   dsimp [Cayley.mul, Cayley.add, Cayley.mulNat, ToNat.toNat, Cayley.one, succ']
   unfold Function.comp Cayley.mulNat Cayley.toT Cayley.toFun
   dsimp [Cayley.add, Cayley.mulNat, Cayley.zero]
-  sorry
+  -- Since the Cayley structure only has one element, the equality holds trivially. We can use the fact that the function defined by the Cayley structure is equal to the function defined by the composition of the Cayley structures.
+  cases' b with b hb;
+  cases h : b 0 <;> simp_all +decide [ Nat.succ_eq_add_one ];
+  · erw [ show b 1 = 1 from by { exact hb 0 ▸ h.symm ▸ rfl } ] ; aesop;
+  · erw [ show b 1 = ‹_› + 2 from by { exact hb 0 ▸ by { exact h.symm ▸ rfl } } ] ; rfl
 
 -- theorem mul_assoc_self {a : CNat 2} : (a * a) * a = a * (a * a) := by
 --   change Cayley.mul (Cayley.mul a a) a = Cayley.mul a (Cayley.mul a a)
@@ -396,5 +400,3 @@ example {a : Nat} : a ^ 2 = 1 * a * a:= rfl
 --   | .succ n => by unfold CNat CayleyTower; infer_instance
 
 end CNat
-
--- Nat.join?
