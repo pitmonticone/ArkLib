@@ -78,15 +78,20 @@ def pad (sz₁ sz₂ : Size)
     fun idx => Matrix.rightpad sz₂.m sz₂.n 0 (matrices idx),
     Fin.rightpad sz₂.n_w 0 wit)
 
--- padding preserves the R1CS relation
-theorem pad_preserves_relation (sz₁ sz₂ : Size)
-    (stmt : Statement R sz₁)
-    (matrices : MatrixIdx → Matrix (Fin sz₁.m) (Fin sz₁.n) R)
-    (wit : Witness R sz₁) :
-    relation R sz₁ stmt matrices wit =
-      let (stmt', matrices', wit') := pad R sz₁ sz₂ stmt matrices wit
-      relation R sz₂ stmt' matrices' wit' := by
-  simp [pad, relation, rightpad]
-  sorry
+-- The original theorem `pad_preserves_relation` was stated without any constraints on sizes,
+-- which makes it false when `sz₂` is smaller than `sz₁` (truncation case). A counterexample:
+-- with `sz₁ = {m=1, n=2, n_w=2}`, `sz₂ = {m=1, n=1, n_w=1}`, matrices `A = B = [[0,1]]`,
+-- `C = [[0,0]]`, and `wit = [1,1]`: the original R1CS relation fails (`1 ≠ 0`), but the
+-- truncated relation holds (`0 = 0`).
+--
+-- theorem pad_preserves_relation (sz₁ sz₂ : Size)
+--     (stmt : Statement R sz₁)
+--     (matrices : MatrixIdx → Matrix (Fin sz₁.m) (Fin sz₁.n) R)
+--     (wit : Witness R sz₁) :
+--     relation R sz₁ stmt matrices wit =
+--       let (stmt', matrices', wit') := pad R sz₁ sz₂ stmt matrices wit
+--       relation R sz₂ stmt' matrices' wit' := by
+--   simp [pad, relation, rightpad]
+--   sorry
 
 end R1CS
