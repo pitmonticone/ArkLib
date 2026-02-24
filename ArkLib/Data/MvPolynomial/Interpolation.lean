@@ -63,10 +63,39 @@ def Function.extendDomain {α β : Type*} [DecidableEq α] [Zero β] {s : Finset
     (f : (x : α) → (x ∈ s) → β) : α → β :=
   fun x ↦ if hx : x ∈ s then f x hx else 0
 
+set_option maxHeartbeats 1600000 in
 open Function in
 lemma schwartz_zippel' {p : MvPolynomial σ R} (hp : p ≠ 0) (S : σ → Finset R) :
     #{x ∈ Finset.pi p.vars S | eval (extendDomain x) p = 0} / ∏ i ∈ p.vars, (#(S i) : ℚ≥0)
-      ≤ ∑ i ∈ p.vars, (p.degreeOf i / #(S i) : ℚ≥0) := by sorry
+      ≤ ∑ i ∈ p.vars, (p.degreeOf i / #(S i) : ℚ≥0) := by
+  have := @schwartz_zippel_of_fintype σ
+  specialize this hp (fun i => if i ∈ p.vars then S i else {0})
+  convert this using 1
+  · congr! 1
+    · refine congr_arg _ (Finset.card_bij ?_ ?_ ?_ ?_)
+      use fun a ha => fun i => if hi : i ∈ p.vars then a i hi else 0
+      · aesop
+      · intro a₁ ha₁ a₂ ha₂ h; funext i hi
+        have := congr_fun h i; simp [hi] at this; exact this
+      · intro b hb; use fun i hi => b i; simp_all +decide [Fintype.piFinset]
+        obtain ⟨⟨a, ha, rfl⟩, hb⟩ := hb; simp_all +decide [funext_iff, MvPolynomial.eval_eq']
+        refine ⟨⟨fun i hi => ?_, ?_⟩, ?_⟩
+        · simpa [hi] using ha i
+        · convert hb using 3
+          refine Finset.prod_congr rfl fun i _ => ?_
+          by_cases hi : i ∈ p.vars <;> simp_all +decide [extendDomain]
+          rw [MvPolynomial.mem_vars] at hi; aesop
+        · grind
+    · rw [← Finset.prod_subset (Finset.subset_univ p.vars)] <;> aesop
+  · rw [← Finset.sum_subset (Finset.subset_univ p.vars)]
+    · exact Finset.sum_congr rfl fun x hx => by aesop
+    · intro x _ hx
+      have hdeg : degreeOf x p = 0 := by
+        rw [degreeOf]
+        simp only [Multiset.count_eq_zero]
+        rw [vars_def] at hx
+        exact fun h => hx (Multiset.mem_toFinset.mpr h)
+      simp [hx, hdeg]
 
 
 end SchwartzZippel
@@ -166,9 +195,23 @@ theorem eq_zero_of_degreeOf_lt_card_of_eval_eq_zero {p : R[X σ]} (S : σ → Fi
   · simp [h]
   · exact rename_eq_zero_of_injective equiv.injective h
 
+-- This theorem is false as stated: it only bounds `degreeOf` of `p`, not `q`.
+-- A counterexample: `p = 0`, `q = X 0 * (X 0 - 1)`, `S 0 = {0, 1}`. Then `p` has degree 0 < 2
+-- and `eval x p = eval x q` for all `x` in the product set, but `p ≠ q`.
+-- theorem eq_of_degreeOf_lt_card_of_eval_eq {p q : R[X σ]} (S : σ → Finset R)
+--     (hDegree : ∀ i, p.degreeOf i < #(S i))
+--     (hEval : ∀ x ∈ piFinset fun i ↦ S i, eval x p = eval x q) : p = q := by sorry
+
+/-- Corrected version of `eq_of_degreeOf_lt_card_of_eval_eq` with degree bounds on both `p`
+    and `q`. -/
 theorem eq_of_degreeOf_lt_card_of_eval_eq {p q : R[X σ]} (S : σ → Finset R)
-    (hDegree : ∀ i, p.degreeOf i < #(S i))
-    (hEval : ∀ x ∈ piFinset fun i ↦ S i, eval x p = eval x q) : p = q := by sorry
+    (hDegree_p : ∀ i, p.degreeOf i < #(S i))
+    (hDegree_q : ∀ i, q.degreeOf i < #(S i))
+    (hEval : ∀ x ∈ piFinset fun i ↦ S i, eval x p = eval x q) : p = q := by
+  have h : p - q = 0 := eq_zero_of_degreeOf_lt_card_of_eval_eq_zero S
+    (fun i => lt_of_le_of_lt (degreeOf_sub_le i p q) (max_lt (hDegree_p i) (hDegree_q i)))
+    (fun x hx => by simp [hEval x hx])
+  exact sub_eq_zero.mp h
 
 end Finset
 
