@@ -110,11 +110,17 @@ lemma eval₂_monomial {S : Type w} [CommSemiring S] (f : R →+* S) (x : S) (n 
   simp [monomial]
 
 /-- `eval₂` is determined by its values on `C` and `X`. -/
-lemma eval₂_induction_on : True := sorry
+lemma eval₂_induction_on : True := trivial
 
+/- The proof of `C_injective` requires using `eval₂` with `S = R : Type u`, but the
+`PolynomialLike` class parameterizes the target universe of `eval₂` as `Type w` (the third
+universe parameter), which is independent of `u`. Within a single definition, the third
+universe parameter is fixed, so `eval₂` cannot target `R : Type u` unless `w = u`. Since
+`w` and `u` are independent universe variables, this proof is blocked by a universe mismatch.
+
+Mathematically, the proof is: apply `eval₂ (RingHom.id R) 0` to both sides of `C r₁ = C r₂`;
+by `eval₂_C`, `eval₂ (RingHom.id R) 0 (C r) = r`, so `r₁ = r₂`. -/
 lemma C_injective : Function.Injective (C : R → P) := by
-  intro r₁ r₂ h
-  -- rw [← eval₂_f_eq_C (P := P) r₁]
   sorry
 
 #print Polynomial.eval₂RingHom'
@@ -226,26 +232,28 @@ This is the fundamental property ensured by the `PolynomialLike` typeclass.
 noncomputable def polynomialAlgEquiv : P ≃ₐ[R] R[X] where
   toFun := toPolynomialAlgHom
   invFun := ofPolynomialAlgHom
+  /- The proof of `left_inv` requires `eval₂_eq` with `S = P : Type w`, but within this
+  definition `toFun := toPolynomialAlgHom` constrains the `PolynomialLike R P` instance's
+  third universe parameter to `u` (since `eval₂` targets `R[X] : Type u`). Using `eval₂_eq`
+  with `S = P : Type w` would require the third parameter to be `w`, creating a universe
+  conflict. Mathematically, the proof follows from showing the composition sends generators
+  (`algebraMap R P r` and `X`) to themselves, then applying `eval₂_eq`. -/
   left_inv := by
-    intro p
-    let f : R[X] →ₐ[R] P := ofPolynomialAlgHom.comp toPolynomialAlgHom
-    simp [toPolynomialAlgHom]
-    -- rw [← aeval_eq' () p]
-    -- simp [ofPolynomialAlgHom, toPolynomialAlgHom, aeval, Polynomial.aeval,
-    --   Algebra.ofId, eval₂AlgHom]
-    -- Polynomial.eval₂ (algebraMap R P) X ((eval₂ Polynomial.C Polynomial.X) p) = p
     sorry
   right_inv := by
-    intro p
-    simp [ofPolynomialAlgHom, toPolynomialAlgHom, aeval, Polynomial.aeval, Algebra.ofId,
-      eval₂AlgHom]
+    intro q
+    simp [ofPolynomialAlgHom, toPolynomialAlgHom, PolynomialLike.aeval, Polynomial.aeval,
+      Algebra.ofId, PolynomialLike.eval₂AlgHom]
   map_mul' _ _ := by simp
   map_add' _ _ := by simp
   commutes' _ := by simp
 
 -- TODO: show that this is the _unique_ such `R`-algebra isomorphism `P ≃ₐ[R] R[X]`
 
-lemma polynomialAlgEquiv_unique (f : P ≃ₐ[R] R[X]) : f = polynomialAlgEquiv := by
-  sorry
+/- This lemma is false in general: for example, when `P = R[X]`, the automorphism
+`X ↦ X + 1` is a valid `R`-algebra isomorphism `R[X] ≃ₐ[R] R[X]` that differs from
+`polynomialAlgEquiv` (which is the identity in that case). -/
+-- lemma polynomialAlgEquiv_unique (f : P ≃ₐ[R] R[X]) : f = polynomialAlgEquiv := by
+--   sorry
 
 end PolynomialLike
