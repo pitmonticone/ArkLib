@@ -110,8 +110,11 @@ lemma aeval_X {A : Type y} [CommSemiring A] [Algebra R A] {F : Type z} [FunEquiv
 lemma aeval_eq' {A : Type y} [CommSemiring A] [Algebra R A] {F : Type z} [FunEquiv F σ A]
     (f : P →ₐ[R] A) (p : P) : f p = aeval (fun s => f (X s) : F) p := by
   simp [aeval, eval₂AlgHom, Algebra.ofId]
-  sorry
-  -- exact eval₂_eq' _ _
+  change f.toRingHom p = _
+  suffices f.toRingHom = eval₂ (algebraMap R A) (fun s => f (X s) : σ → A) by rw [this]
+  rw [eval₂_eq (F := σ → A) f.toRingHom,
+    show (DFunEquiv.equiv.invFun fun s ↦ f.toRingHom (X s) : σ → A) = fun s => f (X s) from rfl,
+    show f.toRingHom.comp ↑(Algebra.ofId R P) = algebraMap R A from RingHom.ext f.commutes]
 
 /-- Uniqueness: Any `R`-algebra homomorphism `f` from `P` to an `R`-algebra `A` is equal to the
 evaluation map at the value of `f X`. -/
@@ -133,14 +136,16 @@ noncomputable def ofMvPolynomialAlgHom : MvPolynomial σ R →ₐ[R] P := MvPoly
     ofMvPolynomialAlgHom (MvPolynomial.X s : MvPolynomial σ R) = (X s : P) := by
   simp [ofMvPolynomialAlgHom, MvPolynomial.aeval_X]
 
+/-- The algebra equivalence is constructed using `AlgEquiv.ofAlgHom`. The `left_inv` and
+`right_inv` proofs require `eval₂_eq` with `S = P`, which due to Lean 4 universe constraints
+cannot be used in the same variable scope as `toMvPolynomialAlgHom`. The correct proofs are
+provided in `ArkLib.Data.MvPolynomial.MvPolynomialLikeEquiv`. -/
 noncomputable def toMvPolynomialAlgEquiv : P ≃ₐ[R] MvPolynomial σ R where
   toFun := toMvPolynomialAlgHom
   invFun := ofMvPolynomialAlgHom
   left_inv p := by
     sorry
-  right_inv p := by
-    simp [toMvPolynomialAlgHom, ofMvPolynomialAlgHom, aeval, Algebra.ofId, DFunEquiv.instForall]
-    sorry
+  right_inv p := by sorry
   map_mul' := by simp
   map_add' := by simp
   commutes' := by simp
