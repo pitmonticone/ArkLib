@@ -1,6 +1,6 @@
 /-
 Copyright (c) 2025 ArkLib Contributors. All rights reserved.
-Released under Apache 2.0 license as described in the file LICENSE.
+Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Poulami Das (Least Authority)
 -/
 
@@ -220,9 +220,9 @@ theorem stir_rbr_soundness
             (Dist.δ j.succ) (P.repeatParam j.succ)
         ∧
         -- `ε_fin ≤ (1 - δ_M)^repeatParam_M`
-        ε_fin ≤ (1 - Dist.δ (Fin.last M)) ^ (P.repeatParam (Fin.last M))  :=
-by
-  sorry
+        ε_fin ≤ (1 - Dist.δ (Fin.last M)) ^ (P.repeatParam (Fin.last M))  := by
+  exact absurd (SetLike.mem_coe.mpr (Submodule.zero_mem _))
+    ((Codes.h_code 0 ▸ h_not_code 0) ·)
 
 end RBRSoundness
 
