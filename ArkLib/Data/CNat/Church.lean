@@ -115,9 +115,11 @@ theorem toNat_ofNat (n : ℕ) : toNat (ofNat n) = n := by
 
 /-- It makes sense that this theorem is not true, since the `ChurchNat ℕ` type is much bigger than
   `ℕ`. -/
-theorem ofNat_toNat (n : ChurchNat ℕ) : ofNat (toNat n) = n := by
-  simp [toNat]
-  sorry
+-- This statement is false: `ChurchNat ℕ` contains non-standard elements (e.g., `fun _ _ => 42`)
+-- that are not in the range of `ofNat`, so `ofNat (toNat n) = n` fails for such `n`.
+-- theorem ofNat_toNat (n : ChurchNat ℕ) : ofNat (toNat n) = n := by
+--   simp [toNat]
+--   sorry
 
 -- Some concrete examples
 def one : ChurchNat α := succ zero
@@ -188,12 +190,13 @@ example : toNat (mul two three) = 6 := rfl
 
 -- The key insight: many properties hold definitionally
 
--- Commutativity requires proof (not definitional)
-theorem add_comm (m n : ChurchNat α) : add m n = add n m := by
-  ext f x
-  simp [add]
-  -- This shows that commutativity is not definitional in Church encoding
-  sorry
+-- Commutativity is actually false for arbitrary `ChurchNat α`, since `ChurchNat α` includes
+-- non-standard elements beyond `ofNat` images. Counterexample: let `m = succ zero` and
+-- `n = fun _ _ => 42`, then `add m n Nat.succ 0 = 43 ≠ 42 = add n m Nat.succ 0`.
+-- theorem add_comm (m n : ChurchNat α) : add m n = add n m := by
+--   ext f x
+--   simp [add]
+--   sorry
 
 end ChurchNat
 
