@@ -63,6 +63,74 @@ theorem peval_eq_eval_sumToIter_rename (f : σ → σ₁ ⊕ σ₂) (x : σ₁ �
         rw [this, Sum.elim_inr]
         simp only [comp_apply, eval_C]
 
+open Classical in
+private lemma count_filterMap_getRight
+    (ms : Multiset (σ₁ ⊕ σ₂)) (j : σ₂) :
+    (ms.filterMap Sum.getRight?).count j = ms.count (Sum.inr j) := by
+  induction ms using Multiset.induction with
+  | empty => simp
+  | cons a s ih =>
+    rw [Multiset.filterMap_cons, Multiset.count_cons]
+    cases a with
+    | inl i => simp [Sum.getRight?]; exact ih
+    | inr j' => simp [Sum.getRight?, Multiset.count_cons, ih, Sum.inr.injEq]
+
+open Classical in
+private lemma comapDomain_inr_toMultiset_eq (d : (σ₁ ⊕ σ₂) →₀ ℕ) :
+    (d.comapDomain Sum.inr Sum.inr_injective.injOn).toMultiset =
+    d.toMultiset.filterMap Sum.getRight? := by
+  rw [Multiset.ext]; intro j
+  rw [count_toMultiset, comapDomain_apply, count_filterMap_getRight, count_toMultiset]
+
+set_option maxHeartbeats 800000 in
+-- sumToIter sends a monomial to a monomial with split exponents
+open Classical in
+private lemma sumToIter_monomial_eq (d : (σ₁ ⊕ σ₂) →₀ ℕ) (r : R) :
+    sumToIter R σ₁ σ₂ (monomial d r) =
+    monomial (d.comapDomain Sum.inl Sum.inl_injective.injOn)
+      (monomial (d.comapDomain Sum.inr Sum.inr_injective.injOn) r) := by
+  have h_prod : d.prod (fun s n => (Sum.elim
+      (X : σ₁ → MvPolynomial σ₁ (MvPolynomial σ₂ R))
+      (MvPolynomial.C ∘ X) s) ^ n) =
+    (comapDomain Sum.inl d (by aesop) |> Finsupp.prod <| fun i n => (X i) ^ n) *
+    (comapDomain Sum.inr d (by aesop) |> Finsupp.prod <| fun j n =>
+      (MvPolynomial.C (X j)) ^ n) := by
+    simp +decide [Finsupp.prod, comapDomain]
+    exact prod_sum_eq_prod_toLeft_mul_prod_toRight d.support
+      fun x => Sum.elim X (C ∘ X) x ^ d x
+  simp +decide [*, mul_comm, MvPolynomial.monomial_eq, sumToIter]
+  convert congr_arg (fun x => C (C r) * x) h_prod using 1
+  · simp +decide [Finsupp.prod]; rfl
+  · simp +decide [mul_left_comm, Finsupp.prod]
+
+set_option maxHeartbeats 1600000 in
+-- degrees of coeff of sumToIter ∘ rename bounded by mapped degrees
+private theorem degrees_coeff_sumToIter_rename
+    {f : σ → σ₁ ⊕ σ₂} {p : MvPolynomial σ R} (b : σ₁ →₀ ℕ) :
+    (coeff b (sumToIter R σ₁ σ₂ (rename f p))).degrees ≤
+    (p.degrees.map f).filterMap Sum.getRight? := by
+  letI : DecidableEq σ₁ := Classical.decEq _
+  letI : DecidableEq σ₂ := Classical.decEq _
+  letI : DecidableEq (σ₁ ⊕ σ₂) := Classical.decEq _
+  letI : DecidableEq σ := Classical.decEq _
+  conv_lhs => rw [(rename f p).as_sum]
+  simp only [map_sum, sumToIter_monomial_eq, coeff_sum, coeff_monomial]
+  refine le_trans (degrees_sum_le _ _) ?_
+  apply Finset.sup_le
+  intro d hd
+  split
+  · refine le_trans (degrees_monomial _ _) ?_
+    rw [comapDomain_inr_toMultiset_eq]
+    have hd_ne : coeff d (rename f p) ≠ 0 := Finsupp.mem_support_iff.mp hd
+    obtain ⟨u, hu_eq, hu_ne⟩ := coeff_rename_ne_zero f p d hd_ne
+    have hu_le : u.toMultiset ≤ p.degrees := Finset.le_sup (Finsupp.mem_support_iff.mpr hu_ne)
+    calc Multiset.filterMap Sum.getRight? (toMultiset d)
+        = Multiset.filterMap Sum.getRight? (Multiset.map f (toMultiset u)) := by
+          rw [← hu_eq, ← toMultiset_map]
+      _ ≤ Multiset.filterMap Sum.getRight? (Multiset.map f p.degrees) :=
+          Multiset.filterMap_le_filterMap _ (Multiset.map_le_map hu_le)
+  · exact bot_le
+
 theorem degrees_peval {x : σ₁ → R} {f : σ → σ₁ ⊕ σ₂} {p : MvPolynomial σ R} :
     (peval f x p).degrees ≤ (p.degrees.map f).filterMap Sum.getRight? := by
   classical
@@ -70,7 +138,7 @@ theorem degrees_peval {x : σ₁ → R} {f : σ → σ₁ ⊕ σ₂} {p : MvPoly
   refine le_trans (degrees_eval) ?_
   simp only [Finset.sup_le_iff, mem_support_iff, ne_eq]
   intro b h
-  sorry
+  exact degrees_coeff_sumToIter_rename b
 
 end PartialEval
 
