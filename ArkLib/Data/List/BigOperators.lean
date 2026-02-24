@@ -66,7 +66,10 @@ theorem findSum_of_le_sum {l : List ℕ} {j : ℕ} (h : j < l.sum) : ∃ n, find
 def findSumIdx (l : List α) (j : α) : ℕ := l.partialSum.findIdx (j < ·)
 
 -- Variant of `findSumIdx` with bounds
-def findSumIdx' (l : List ℕ) (j : Fin l.sum) : Fin l.length := ⟨findSumIdx l j, sorry⟩
+-- COMMENTED OUT: The bound `findSumIdx l j < l.length` is false.
+-- Counterexample: `l = [3], j = ⟨0, by omega⟩` gives `findSumIdx [3] 0 = 1` but `[3].length = 1`.
+-- The correct bound is `findSumIdx l j < l.length + 1` (i.e., `Fin (l.length + 1)`).
+-- def findSumIdx' (l : List ℕ) (j : Fin l.sum) : Fin l.length := ⟨findSumIdx l j, sorry⟩
 
 def findSumIdxWith (l : List ℕ) (j : Fin l.sum) : (i : Fin l.length) × Fin (l.get i) := sorry
 
