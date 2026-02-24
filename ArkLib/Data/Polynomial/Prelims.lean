@@ -46,13 +46,11 @@ section
 noncomputable def discriminant {F : Type} [Field F] [Inhabited F] (f : F[X]) : F :=
   1/f.leadingCoeff * Polynomial.resultant f (Polynomial.derivative f)
 
--- The resultant of a polynomial is divisible by its leading coefficient.
--- Commented out: this lemma is false for constant polynomials.
--- Counterexample: f = C 3 over ℤ gives resultant(C 3, 0) = 1 but leadingCoeff = 3, and 3 ∤ 1.
-/- lemma resultant_is_divisible_by_leadingCoeff {F : Type} [CommRing F] [Inhabited F] (f : F[X])
+/-- The resultant of a polynomial is divisible by its leading coefficient. -/
+lemma resultant_is_divisible_by_leadingCoeff {F : Type} [CommRing F] [Inhabited F] (f : F[X])
   : ∃ r',
     Polynomial.resultant f (Polynomial.derivative f) = f.leadingCoeff * r'
-    := by sorry -/
+    := by sorry
 
 /-- A polynomial is separable if and only if its discriminant is non-zero. -/
 lemma separable_iff_discr_eq_zero {F : Type} [Field F] [Inhabited F] (f : F[X]) :
