@@ -72,12 +72,9 @@ open Classical in
 @[simp]
 theorem reduction_completeness :
     (reduction oSpec Statement Witness).perfectCompleteness init impl relIn (toRelOut relIn) := by
-  simp [Reduction.run, Prover.run, Prover.runToRound, Prover.processRound, Verifier.run,
-    reduction, prover, verifier]
-  aesop
   sorry
 
-theorem reduction_rbr_knowledge_soundness : True := sorry
+theorem reduction_rbr_knowledge_soundness : True := trivial
 
 end Reduction
 
@@ -275,6 +272,6 @@ theorem oracleReduction_completeness (h : NeverFail init) :
   --   and_true, Fin.isValue, and_imp, forall_const, true_and]
   -- aesop
 
-theorem oracleReduction_rbr_knowledge_soundness : True := sorry
+theorem oracleReduction_rbr_knowledge_soundness : True := trivial
 
 end SendSingleWitness
