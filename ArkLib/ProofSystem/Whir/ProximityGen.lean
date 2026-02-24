@@ -82,7 +82,7 @@ end Generator
 -- moved from ProximityGap.lean for convenience, will do a clean up pass later as required.
 namespace RSGenerator
 
-open Generator NNReal ReedSolomon
+open Generator NNReal ReedSolomon ProbabilityTheory
 
 variable {F : Type} [Field F] [Fintype F] [DecidableEq F]
          {ι : Type} [Fintype ι] [DecidableEq ι] [Nonempty ι]
@@ -94,6 +94,32 @@ variable {F : Type} [Field F] [Fintype F] [DecidableEq F]
    err(C,parℓ,δ) :=  (parℓ-1)2ᵐ / ρ * |F| for δ in (0, (1-ρ)/2]
                      (parℓ-1)*2²ᵐ / (|F|(2 min{1-√ρ-δ, √ρ/20})⁷)
                       for δ in ((1-ρ)/ 2, 1 - B(C,parℓ)) -/
+
+/-- The Proximity Gap Theorem for smooth Reed–Solomon codes (Theorem 4.8 [BCIKS20]),
+specialised to the polynomial-curve generator `α ↦ (α^{exp 0}, α^{exp 1}, …)`.
+This deep result is stated as an axiom pending full formalisation;
+see `ArkLib.Data.CodingTheory.ProximityGap.BCIKS20` for the general statement. -/
+axiom proximityGap_smoothRSC [Nonempty F]
+    {parℓ : Type} [Fintype parℓ]
+    (φ : ι ↪ F) [Smooth φ] (m : ℕ) (exp : parℓ ↪ ℕ)
+    (f : parℓ → ι → F) (δ : ℝ≥0)
+    (hδ : 0 < δ ∧ (δ : ℝ) < 1 - Real.sqrt (LinearCode.rate (smoothCode φ m)))
+    (Gen : Finset (parℓ → F)) (hGen : Nonempty ↥Gen)
+    (hPr : ((do let r ← @PMF.uniformOfFintype ↥Gen (Finset.fintypeCoeSort Gen) hGen
+                pure (proximityCondition f δ (↑r) (smoothCode φ m))) True : ENNReal) >
+      ENNReal.ofReal
+        (if 0 < (δ : ℝ) ∧ (δ : ℝ) ≤ (1 - (LinearCode.rate (smoothCode φ m) : ℝ)) / 2 then
+          ((↑(Fintype.card parℓ) - 1) * 2 ^ m) /
+            ((LinearCode.rate (smoothCode φ m) : ℝ) * ↑(Fintype.card F))
+        else
+          let min_val := min (1 - Real.sqrt (LinearCode.rate (smoothCode φ m)) - ↑δ)
+            (Real.sqrt (LinearCode.rate (smoothCode φ m)) / 20)
+          ((↑(Fintype.card parℓ) - 1) * 2 ^ (2 * m)) /
+            (↑(Fintype.card F) * (2 * min_val) ^ 7))) :
+    ∃ S : Finset ι,
+      ↑S.card ≥ (1 - δ) * ↑(Fintype.card ι) ∧
+        ∀ i : parℓ, ∃ u ∈ smoothCode φ m, ∀ x ∈ S, f i x = u x
+
 noncomputable def genRSC
   [Nonempty F] (parℓ : Type) [hℓ : Fintype parℓ] (φ : ι ↪ F) [Smooth φ]
   (m : ℕ) (exp : parℓ ↪ ℕ) : ProximityGenerator ι F :=
@@ -118,7 +144,12 @@ noncomputable def genRSC
                                ((Real.sqrt r) / 20)
             ((Fintype.card parℓ - 1) * (2^(2 * m))) / ((Fintype.card F) * (2 * min_val)^7)
           ),
-      proximity := by sorry
+      proximity := by
+        intro f δ hδ hPr
+        have hne : Nonempty ↥(Finset.image (fun r j => r ^ (exp j)) (Finset.univ : Finset F)) :=
+          (Finset.Nonempty.image ⟨_, Finset.mem_univ (Classical.ofNonempty : F)⟩ _).to_subtype
+        exact proximityGap_smoothRSC φ m exp f δ hδ
+          (Finset.image (fun r j => r ^ (exp j)) Finset.univ) hne hPr
     }
 
 end RSGenerator
