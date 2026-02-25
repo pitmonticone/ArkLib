@@ -362,13 +362,12 @@ theorem distanceLE_polynomial_degreeLE :
   intro a b hab
   exact le_trans (distanceLE_polynomial_degreeLT a b hab) (Nat.sub_le d 1)
 
-/- The following theorem is false as stated. Counterexample: R = ZMod 5, σ = Fin 2, d = 1.
-   The polynomial X₀ and 0 are distinct elements of R⦃≤ 1⦄[X Fin 2], yet they agree on
-   #{x : Fin 2 → ZMod 5 | x 0 = 0} = 5 points, which exceeds Fintype.card (Fin 2) * 1 = 2.
-   The correct Schwartz-Zippel-type bound should be
-   Fintype.card σ * d * Fintype.card R ^ (Fintype.card σ - 1). -/
--- theorem distanceLE_mvPolynomial_degreeLE {σ : Type} [Fintype σ] [DecidableEq σ] :
---     distanceLE (instMvPolynomialDegreeLE R d σ) (Fintype.card σ * d) := by
---   sorry
+/-- Schwartz-Zippel-type distance bound for multivariable polynomials of degree ≤ d.
+    The bound is `Fintype.card σ * d * Fintype.card R ^ (Fintype.card σ - 1)` (the earlier
+    bound `Fintype.card σ * d` was false; see counterexample in comment history). -/
+theorem distanceLE_mvPolynomial_degreeLE {σ : Type} [Fintype σ] [DecidableEq σ] :
+    distanceLE (instMvPolynomialDegreeLE R d σ)
+      (Fintype.card σ * d * Fintype.card R ^ (Fintype.card σ - 1)) := by
+  sorry
 
 end PolynomialDistance
