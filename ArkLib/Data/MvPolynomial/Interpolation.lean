@@ -195,15 +195,8 @@ theorem eq_zero_of_degreeOf_lt_card_of_eval_eq_zero {p : R[X σ]} (S : σ → Fi
   · simp [h]
   · exact rename_eq_zero_of_injective equiv.injective h
 
--- This theorem is false as stated: it only bounds `degreeOf` of `p`, not `q`.
--- A counterexample: `p = 0`, `q = X 0 * (X 0 - 1)`, `S 0 = {0, 1}`. Then `p` has degree 0 < 2
--- and `eval x p = eval x q` for all `x` in the product set, but `p ≠ q`.
--- theorem eq_of_degreeOf_lt_card_of_eval_eq {p q : R[X σ]} (S : σ → Finset R)
---     (hDegree : ∀ i, p.degreeOf i < #(S i))
---     (hEval : ∀ x ∈ piFinset fun i ↦ S i, eval x p = eval x q) : p = q := by sorry
-
-/-- Corrected version of `eq_of_degreeOf_lt_card_of_eval_eq` with degree bounds on both `p`
-    and `q`. -/
+/-- Equality of multivariable polynomials when they agree on a product of sets and have
+    degree bounds on both (per-variable degree less than set size). -/
 theorem eq_of_degreeOf_lt_card_of_eval_eq {p q : R[X σ]} (S : σ → Finset R)
     (hDegree_p : ∀ i, p.degreeOf i < #(S i))
     (hDegree_q : ∀ i, q.degreeOf i < #(S i))
