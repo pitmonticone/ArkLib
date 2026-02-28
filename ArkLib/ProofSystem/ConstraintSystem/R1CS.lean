@@ -6,6 +6,7 @@ Authors: Quang Dao
 
 import ArkLib.Data.Matrix.Basic
 import ArkLib.Data.Fin.Tuple.Lemmas
+import ArkLib.Mathlib.Data.Fin.Tuple.Basic
 
 /-!
 # Rank-1 Constraint System (R1CS)
@@ -79,29 +80,11 @@ def pad (sz₁ sz₂ : Size)
     fun idx => Matrix.rightpad sz₂.m sz₂.n 0 (matrices idx),
     Fin.rightpad sz₂.n_w 0 wit)
 
-lemma append_mk_lt {α} {m n : ℕ} (u : Fin m → α) (v : Fin n → α)
-    (j : ℕ) (h : j < m + n) (hlt : j < m) :
-    Fin.append u v ⟨j, h⟩ = u ⟨j, hlt⟩ := by
-  rw [show (⟨j, h⟩ : Fin (m + n)) = Fin.castAdd n ⟨j, hlt⟩ from Fin.ext rfl, Fin.append_left]
-
 lemma append_mk_ge {α} {m n : ℕ} (u : Fin m → α) (v : Fin n → α)
     (j : ℕ) (h : j < m + n) (hge : ¬ j < m) :
     Fin.append u v ⟨j, h⟩ = v ⟨j - m, by omega⟩ := by
   rw [show (⟨j, h⟩ : Fin (m + n)) = Fin.natAdd m ⟨j - m, by omega⟩ from
     Fin.ext (by simp; omega), Fin.append_right]
-
-lemma dotProduct_rightpad {R} [CommSemiring R]
-    {n₁ n₂ : ℕ} (hn : n₁ ≤ n₂) (f g : Fin n₁ → R) :
-    (∑ j : Fin n₂, Fin.rightpad n₂ (0 : R) f j * Fin.rightpad n₂ (0 : R) g j) =
-    ∑ j : Fin n₁, f j * g j := by
-  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le hn; simp only [Fin.sum_univ_add]
-  have h1 : ∀ i : Fin n₁, Fin.rightpad (n₁ + k) (0 : R) f (Fin.castAdd k i) *
-      Fin.rightpad (n₁ + k) (0 : R) g (Fin.castAdd k i) = f i * g i :=
-    fun i ↦ by simp [Fin.rightpad, i.isLt]
-  have h2 : ∀ j : Fin k, Fin.rightpad (n₁ + k) (0 : R) f (Fin.natAdd n₁ j) *
-      Fin.rightpad (n₁ + k) (0 : R) g (Fin.natAdd n₁ j) = 0 :=
-    fun j ↦ by simp [Fin.rightpad]
-  simp_rw [h1, h2, Finset.sum_const_zero, add_zero]
 
 /-- Padding preserves the R1CS relation when `sz₁.m ≤ sz₂.m` (no row truncation),
     `sz₁.n_w ≤ sz₂.n_w` (no witness truncation), and `sz₁.n_x = sz₂.n_x` (same number of
