@@ -5,6 +5,7 @@ Authors: Quang Dao
 -/
 
 import ArkLib.Data.Matrix.Basic
+import ArkLib.Data.Fin.Tuple.Lemmas
 
 /-!
 # Rank-1 Constraint System (R1CS)
@@ -78,18 +79,71 @@ def pad (sz₁ sz₂ : Size)
     fun idx => Matrix.rightpad sz₂.m sz₂.n 0 (matrices idx),
     Fin.rightpad sz₂.n_w 0 wit)
 
-/-- Padding preserves the R1CS relation when we only pad (no truncation):
-    we require `sz₁.m ≤ sz₂.m`, `sz₁.n ≤ sz₂.n`, and `sz₁.n_w ≤ sz₂.n_w`.
-    Without these, the theorem is false (truncation can make the padded relation hold
-    while the original fails). -/
+lemma append_mk_lt {α} {m n : ℕ} (u : Fin m → α) (v : Fin n → α)
+    (j : ℕ) (h : j < m + n) (hlt : j < m) :
+    Fin.append u v ⟨j, h⟩ = u ⟨j, hlt⟩ := by
+  rw [show (⟨j, h⟩ : Fin (m + n)) = Fin.castAdd n ⟨j, hlt⟩ from Fin.ext rfl, Fin.append_left]
+
+lemma append_mk_ge {α} {m n : ℕ} (u : Fin m → α) (v : Fin n → α)
+    (j : ℕ) (h : j < m + n) (hge : ¬ j < m) :
+    Fin.append u v ⟨j, h⟩ = v ⟨j - m, by omega⟩ := by
+  rw [show (⟨j, h⟩ : Fin (m + n)) = Fin.natAdd m ⟨j - m, by omega⟩ from
+    Fin.ext (by simp; omega), Fin.append_right]
+
+lemma dotProduct_rightpad {R} [CommSemiring R]
+    {n₁ n₂ : ℕ} (hn : n₁ ≤ n₂) (f g : Fin n₁ → R) :
+    (∑ j : Fin n₂, Fin.rightpad n₂ (0 : R) f j * Fin.rightpad n₂ (0 : R) g j) =
+    ∑ j : Fin n₁, f j * g j := by
+  obtain ⟨k, rfl⟩ := Nat.exists_eq_add_of_le hn; simp only [Fin.sum_univ_add]
+  have h1 : ∀ i : Fin n₁, Fin.rightpad (n₁ + k) (0 : R) f (Fin.castAdd k i) *
+      Fin.rightpad (n₁ + k) (0 : R) g (Fin.castAdd k i) = f i * g i :=
+    fun i ↦ by simp [Fin.rightpad, i.isLt]
+  have h2 : ∀ j : Fin k, Fin.rightpad (n₁ + k) (0 : R) f (Fin.natAdd n₁ j) *
+      Fin.rightpad (n₁ + k) (0 : R) g (Fin.natAdd n₁ j) = 0 :=
+    fun j ↦ by simp [Fin.rightpad]
+  simp_rw [h1, h2, Finset.sum_const_zero, add_zero]
+
+/-- Padding preserves the R1CS relation when `sz₁.m ≤ sz₂.m` (no row truncation),
+    `sz₁.n_w ≤ sz₂.n_w` (no witness truncation), and `sz₁.n_x = sz₂.n_x` (same number of
+    public variables). The last condition is essential: padding `stmt` and `wit` independently
+    can misalign the combined vector `𝕫` if `n_x` changes. -/
 theorem pad_preserves_relation (sz₁ sz₂ : Size)
-    (h : sz₁.m ≤ sz₂.m ∧ sz₁.n ≤ sz₂.n ∧ sz₁.n_w ≤ sz₂.n_w)
+    (h : sz₁.m ≤ sz₂.m ∧ sz₁.n_w ≤ sz₂.n_w ∧ sz₁.n_x = sz₂.n_x)
     (stmt : Statement R sz₁)
     (matrices : MatrixIdx → Matrix (Fin sz₁.m) (Fin sz₁.n) R)
     (wit : Witness R sz₁) :
     relation R sz₁ stmt matrices wit =
       let (stmt', matrices', wit') := pad R sz₁ sz₂ stmt matrices wit
       relation R sz₂ stmt' matrices' wit' := by
-  sorry
+  obtain ⟨hm, hnw, hnx⟩ := h
+  have hnx1 : sz₁.n_x = sz₁.n - sz₁.n_w := rfl; have hnx2 : sz₂.n_x = sz₂.n - sz₂.n_w := rfl
+  have hn_w1 := sz₁.n_w_le_n; have hn_w2 := sz₂.n_w_le_n
+  have hn : sz₁.n ≤ sz₂.n := by omega
+  have z_eq : 𝕫 (Fin.rightpad sz₂.n_x 0 stmt) (Fin.rightpad sz₂.n_w 0 wit) =
+      Fin.rightpad sz₂.n 0 (𝕫 stmt wit) := by
+    ext ⟨j, hj⟩; by_cases hlt : j < sz₁.n
+    · conv_rhs => rw [Fin.rightpad_apply_lt _ _ _ _ hlt]
+      simp only [𝕫, Function.comp, Fin.cast_mk]; by_cases hx : j < sz₁.n_x
+      · rw [append_mk_lt _ _ j _ (by omega), Fin.rightpad_apply_lt _ _ _ _ hx,
+            append_mk_lt _ _ j _ hx]
+      · rw [append_mk_ge _ _ j _ (by omega),
+            Fin.rightpad_apply_lt _ _ _ _ (show j - sz₂.n_x < sz₁.n_w by omega),
+            append_mk_ge _ _ j _ hx]
+        exact congrArg wit (Fin.ext (show j - sz₂.n_x = j - sz₁.n_x by omega))
+    · push_neg at hlt; conv_rhs => rw [Fin.rightpad_apply_ge _ _ _ _ hlt]
+      simp only [𝕫, Function.comp, Fin.cast_mk]
+      rw [append_mk_ge _ _ j _ (by omega : ¬ j < sz₂.n_x),
+          Fin.rightpad_apply_ge _ _ _ _ (show sz₁.n_w ≤ j - sz₂.n_x by omega)]
+  have mv_eq : ∀ (M : Matrix (Fin sz₁.m) (Fin sz₁.n) R),
+      Matrix.rightpad sz₂.m sz₂.n 0 M *ᵥ Fin.rightpad sz₂.n 0 (𝕫 stmt wit) =
+      Fin.rightpad sz₂.m 0 (M *ᵥ 𝕫 stmt wit) := fun M => funext fun ⟨i, hi⟩ => by
+    simp only [mulVec, dotProduct, Matrix.rightpad, Fin.rightpad, Function.comp]
+    split_ifs with him
+    · exact dotProduct_rightpad hn (M ⟨i, him⟩) (𝕫 stmt wit)
+    · exact Finset.sum_eq_zero fun ⟨j, _⟩ _ => by ring
+  simp only [relation, pad, z_eq]; simp only [mv_eq]; apply propext
+  constructor <;> intro heq <;> funext ⟨i, hi⟩ <;> simp only [Pi.mul_apply, Fin.rightpad]
+  · split_ifs with him <;> [exact congr_fun heq ⟨i, him⟩; ring]
+  · simpa [show i < sz₁.m from hi] using congr_fun heq ⟨i, by omega⟩
 
 end R1CS
