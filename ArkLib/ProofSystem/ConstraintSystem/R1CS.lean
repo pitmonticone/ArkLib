@@ -6,7 +6,6 @@ Authors: Quang Dao
 
 import ArkLib.Data.Matrix.Basic
 import ArkLib.Data.Fin.Tuple.Lemmas
-import ArkLib.Mathlib.Data.Fin.Tuple.Basic
 
 /-!
 # Rank-1 Constraint System (R1CS)
@@ -80,12 +79,6 @@ def pad (sz₁ sz₂ : Size)
     fun idx => Matrix.rightpad sz₂.m sz₂.n 0 (matrices idx),
     Fin.rightpad sz₂.n_w 0 wit)
 
-lemma append_mk_ge {α} {m n : ℕ} (u : Fin m → α) (v : Fin n → α)
-    (j : ℕ) (h : j < m + n) (hge : ¬ j < m) :
-    Fin.append u v ⟨j, h⟩ = v ⟨j - m, by omega⟩ := by
-  rw [show (⟨j, h⟩ : Fin (m + n)) = Fin.natAdd m ⟨j - m, by omega⟩ from
-    Fin.ext (by simp; omega), Fin.append_right]
-
 /-- Padding preserves the R1CS relation when `sz₁.m ≤ sz₂.m` (no row truncation),
     `sz₁.n_w ≤ sz₂.n_w` (no witness truncation), and `sz₁.n_x = sz₂.n_x` (same number of
     public variables). The last condition is essential: padding `stmt` and `wit` independently
@@ -107,15 +100,15 @@ theorem pad_preserves_relation (sz₁ sz₂ : Size)
     ext ⟨j, hj⟩; by_cases hlt : j < sz₁.n
     · conv_rhs => rw [Fin.rightpad_apply_lt _ _ _ _ hlt]
       simp only [𝕫, Function.comp, Fin.cast_mk]; by_cases hx : j < sz₁.n_x
-      · rw [append_mk_lt _ _ j _ (by omega), Fin.rightpad_apply_lt _ _ _ _ hx,
-            append_mk_lt _ _ j _ hx]
-      · rw [append_mk_ge _ _ j _ (by omega),
+      · rw [Fin.append_mk_lt j _ (by omega), Fin.rightpad_apply_lt _ _ _ _ hx,
+            Fin.append_mk_lt j _ hx]
+      · rw [Fin.append_mk_not_lt j _ (by omega),
             Fin.rightpad_apply_lt _ _ _ _ (show j - sz₂.n_x < sz₁.n_w by omega),
-            append_mk_ge _ _ j _ hx]
+            Fin.append_mk_not_lt j _ hx]
         exact congrArg wit (Fin.ext (show j - sz₂.n_x = j - sz₁.n_x by omega))
     · push_neg at hlt; conv_rhs => rw [Fin.rightpad_apply_ge _ _ _ _ hlt]
       simp only [𝕫, Function.comp, Fin.cast_mk]
-      rw [append_mk_ge _ _ j _ (by omega : ¬ j < sz₂.n_x),
+      rw [Fin.append_mk_not_lt j _ (by omega : ¬ j < sz₂.n_x),
           Fin.rightpad_apply_ge _ _ _ _ (show sz₁.n_w ≤ j - sz₂.n_x by omega)]
   have mv_eq : ∀ (M : Matrix (Fin sz₁.m) (Fin sz₁.n) R),
       Matrix.rightpad sz₂.m sz₂.n 0 M *ᵥ Fin.rightpad sz₂.n 0 (𝕫 stmt wit) =
