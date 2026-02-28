@@ -223,12 +223,12 @@ theorem append_right' {u : Fin m → α} {v : Fin n → α} {i : Fin n}
   subst h
   simp only [append_right]
 
-theorem append_mk_lt {u : Fin m → α} {v : Fin n → α}
+theorem append_left_of_lt {u : Fin m → α} {v : Fin n → α}
     (j : ℕ) (h : j < m + n) (hlt : j < m) :
     append u v ⟨j, h⟩ = u ⟨j, hlt⟩ := by
   rw [show (⟨j, h⟩ : Fin (m + n)) = castAdd n ⟨j, hlt⟩ from Fin.ext rfl, append_left]
 
-theorem append_mk_not_lt {u : Fin m → α} {v : Fin n → α}
+theorem append_right_of_not_lt {u : Fin m → α} {v : Fin n → α}
     (j : ℕ) (h : j < m + n) (hge : ¬ j < m) :
     append u v ⟨j, h⟩ = v ⟨j - m, by omega⟩ := by
   rw [show (⟨j, h⟩ : Fin (m + n)) = natAdd m ⟨j - m, by omega⟩ from
