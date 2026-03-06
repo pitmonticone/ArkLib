@@ -86,4 +86,9 @@ If `linsolve` returns `none`, the linear system has no solution.
 -/
 theorem linsolve_none {A : Matrix (Fin n) (Fin m) F} {b : Fin n → F}
   (h : linsolve A b = none)
-  : ¬∃ x, A.mulVec x = b := by sorry
+  : ¬∃ x, A.mulVec x = b := by
+  unfold linsolve at h
+  by_cases hex : ∃ x, A.mulVec x = b
+  · rw [dif_pos hex] at h
+    cases h
+  · exact hex
