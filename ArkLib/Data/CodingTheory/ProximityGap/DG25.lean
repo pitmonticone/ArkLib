@@ -7,7 +7,8 @@ import CompPoly.Data.Nat.Bitwise
 import ArkLib.Data.CodingTheory.Basic
 import ArkLib.Data.CodingTheory.InterleavedCode
 import ArkLib.Data.CodingTheory.ReedSolomon
-import ArkLib.Data.CodingTheory.ProximityGap.BCIKS20
+import ArkLib.Data.CodingTheory.ProximityGap.BCIKS20.ErrorBound
+import ArkLib.Data.CodingTheory.ProximityGap.BCIKS20.AffineLines.UniqueDecoding
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
 import ArkLib.Data.Probability.Instances
 import ArkLib.Data.CodingTheory.Prelims

@@ -6,7 +6,8 @@ Authors: Katerina Hristova, František Silváši, Julian Sutherland
 
 import ArkLib.Data.CodingTheory.Basic
 import ArkLib.Data.CodingTheory.ProximityGap.Basic
-import ArkLib.Data.CodingTheory.ProximityGap.BCIKS20
+import ArkLib.Data.CodingTheory.ProximityGap.BCIKS20.ErrorBound
+import ArkLib.Data.CodingTheory.ProximityGap.BCIKS20.ReedSolomonGap
 import ArkLib.Data.CodingTheory.ReedSolomon
 import ArkLib.Data.Probability.Notation
 import Mathlib.LinearAlgebra.AffineSpace.AffineSubspace.Defs
