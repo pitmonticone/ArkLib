@@ -1588,7 +1588,7 @@ lemma prob_R_star_gt_threshold
   rw [h_sub_eq_goal] at h_lt_sub
   exact h_lt_sub
 
-omit [NoZeroDivisors F] [Fintype A] [Module.Free F A] [Nontrivial ↥MC] in
+omit [DecidableEq F] [NoZeroDivisors F] [Fintype A] [Module.Free F A] [Nontrivial ↥MC] in
 /- **Theorem 3.6 (Angeris-Evans-Roh AER24): Interleaved Affine Gaps -> Tensor Gaps**
 If, for **every** interleaving factor `m ≥ 1`, the `m`-fold interleaved code `C^m`
 features proximity gaps for affine lines with respect to parameters `e` and `ε`,
@@ -1603,6 +1603,7 @@ theorem interleaved_affine_gaps_imply_tensor_gaps
         (A := InterleavedSymbol A (Fin m)) (ι := ι) (C := MC ^⋈ (Fin m)) e ε) :
     ∀ (ϑ : ℕ), (hϑ_gt_0 : ϑ > 0) → δ_ε_multilinearCorrelatedAgreement_Nat (F := F) (A := A)
       (ι := ι) (C := MC) (ϑ := ϑ) (e := e) (ε := ε) := by
+    classical
     intro ϑ
     induction ϑ with
     | zero =>
@@ -1772,11 +1773,12 @@ theorem interleaved_affine_gaps_imply_tensor_gaps
         apply CA_split_rowwise_implies_CA (u := u) (e := e)
         exact h_final_gap
 
-omit [Fintype F] [NoZeroDivisors F] [DecidableEq F] [Fintype A] [Module.Free F A]
+omit [DecidableEq ι] [Fintype F] [NoZeroDivisors F] [DecidableEq F] [Fintype A] [Module.Free F A]
   [Nontrivial ↥MC] in
 lemma jointProximity₂_affineShift_implies_jointProximity₂ (u₀ u₁ : Word A ι) (δ : ℝ≥0) :
   jointProximity₂ (C := MC) (u₀ := u₀) (u₁ := u₁ - u₀) (δ := δ) →
     jointProximity₂ (C := MC) (u₀ := u₀) (u₁ := u₁) (δ := δ) := by
+  classical
   intro h_shifted_jointProximity₂
   unfold jointProximity₂ at h_shifted_jointProximity₂ ⊢
   rw [←jointAgreement_iff_jointProximity] at h_shifted_jointProximity₂ ⊢
